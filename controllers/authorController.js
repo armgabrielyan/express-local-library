@@ -37,23 +37,19 @@ exports.author_create_post = [
     sanitizeBody('date_of_death').toDate(),
     (req, res, next) => {
         const { body } = req;
+        const author = new Author(body);
         const errors = validationResult(req);
+        
         if (!errors.isEmpty()) {
             return res.render('author_form',
                 {
                     title: 'Create Author',
-                    author: body,
+                    author,
                     errors: errors.array()
                 }
             );
         }
 
-        const author = new Author({
-            first_name: body.first_name,
-            last_name: body.last_name,
-            date_of_birth: body.date_of_birth,
-            date_of_death: body.date_of_death
-        });
         author.save(err => {
             if (err) {
                 return next(err);
