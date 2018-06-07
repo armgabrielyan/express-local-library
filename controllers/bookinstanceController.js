@@ -11,9 +11,7 @@ exports.bookinstance_list = (req, res, next) => {
             if (err) {
                 return next(err);
             }
-    
-            console.log(bookInstances[0].book);
-    
+        
             res.render(
                 'bookinstance_list',
                 {
@@ -181,9 +179,6 @@ exports.bookinstance_update_post = [
                 })
                 .catch(err => next(err));
         }
-
-        console.log(bookinstance);
-        console.log(body);
 
         BookInstance.findByIdAndUpdate(req.params.id, bookinstance, {}, (err, updatedBookInstance) => {
             if (err) {
