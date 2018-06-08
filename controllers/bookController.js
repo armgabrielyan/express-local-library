@@ -3,19 +3,64 @@ const { sanitizeBody } = require('express-validator/filter');
 const Book = require('../models/book');
 const Author = require('../models/author');
 const Genre = require('../models/genre');
+const BookInstance = require('../models/bookinstance');
 
-exports.index = function(req, res) {
-    res.send('NOT IMPLEMENTED: Site Home Page');
+
+exports.index = (req, res, next) => {
+    Promise.all([
+        Book.find().count(),
+        BookInstance.find().count(),
+        BookInstance.find({ status: 'Available' }).count(),
+        Author.find().count(),
+        Genre.find().count()
+    ])
+        .then(data => {
+            const [
+                bookCount, 
+                bookInstanceCount, 
+                bookInstanceAvailableCount, 
+                authorCount, 
+                genreCount
+            ] = data;
+
+            res.render(
+                'index',
+                {
+                    title: 'Local Library Home',
+                    bookCount, 
+                    bookInstanceCount, 
+                    bookInstanceAvailableCount, 
+                    authorCount, 
+                    genreCount
+                }
+            );
+        })
 };
 
 // Display list of all books.
-exports.book_list = function(req, res) {
-    res.send('NOT IMPLEMENTED: Book list');
+exports.book_list = (req, res, next) => {
+    Book.find()
+        .populate('author')
+        .exec((err, books) => {
+            if (err) {
+                return next(err);
+            }
+
+            res.render('book_list', { title: 'Books List', books });
+        });
 };
 
 // Display detail page for a specific book.
-exports.book_detail = function(req, res) {
-    res.send('NOT IMPLEMENTED: Book detail: ' + req.params.id);
+exports.book_detail = (req, res, next) => {
+    Promise.all([
+        Book.findById(req.params.id).populate('genre'),
+        BookInstance.find({ book: req.params.id })
+    ])
+        .then(data => {
+            const [book, bookInstances] = data;
+            res.render('book_detail', { title: 'Book Detail', book, bookInstances });
+        })
+        .catch(err => next(err));
 };
 
 // Display book create form on GET.
@@ -93,13 +138,28 @@ exports.book_create_post = [
 ];
 
 // Display book delete form on GET.
-exports.book_delete_get = function(req, res) {
-    res.send('NOT IMPLEMENTED: Book delete GET');
+exports.book_delete_get = (req, res, next) => {
+    Promise.all([
+        Book.findById(req.params.id).populate('genre'),
+        BookInstance.find({ book: req.params.id })
+    ])
+        .then(data => {
+            const [book, bookInstances] = data;
+            res.render('book_delete', { title: 'Delete Book', book, bookInstances });
+        })
+        .catch(err => next(err));
 };
 
 // Handle book delete on POST.
-exports.book_delete_post = function(req, res) {
-    res.send('NOT IMPLEMENTED: Book delete POST');
+exports.book_delete_post = (req, res, next) => {
+    Book.findByIdAndRemove(req.body.id)
+        .exec(err => {
+            if (err) {
+                return next(err);
+            }
+
+            res.redirect('/catalog/books');
+        });
 };
 
 // Display book update form on GET.
