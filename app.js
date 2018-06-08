@@ -4,6 +4,8 @@ var path = require('path');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var compression = require('compression');
+var helmet = require('helmet');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -11,13 +13,16 @@ var catalog = require('./routes/catalog');
 
 var app = express();
 
+app.use(helmet());
+
 var mongoose = require('mongoose');
-var mongoDB = config.mongoDB;
+var mongoDB = process.env.MONGODB_URI || config.mongoDB;
 mongoose.connect(mongoDB);
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
+app.use(compression());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
