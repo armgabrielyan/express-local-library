@@ -1,4 +1,3 @@
-var config = require('./config');
 var express = require('express');
 var path = require('path');
 var logger = require('morgan');
@@ -16,7 +15,7 @@ var app = express();
 app.use(helmet());
 
 var mongoose = require('mongoose');
-var mongoDB = process.env.MONGODB_URI || config.mongoDB;
+var mongoDB = process.env.MONGODB_URI;
 mongoose.connect(mongoDB);
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
