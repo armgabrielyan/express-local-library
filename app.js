@@ -5,18 +5,19 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var compression = require('compression');
 var helmet = require('helmet');
+var mongoose = require('mongoose');
 
 var index = require('./routes/index');
-var users = require('./routes/users');
-var catalog = require('./routes/catalog');
+var authors = require('./routes/authors');
+var books = require('./routes/books');
+var bookInstances = require('./routes/bookInstances');
+var genres = require('./routes/genres');
 
 var app = express();
 
 app.use(helmet());
 
-var mongoose = require('mongoose');
-var mongoDB = process.env.MONGODB_URI;
-mongoose.connect(mongoDB);
+mongoose.connect(process.env.MONGODB_URI);
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -33,8 +34,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
-app.use('/users', users);
-app.use('/catalog', catalog);
+app.use('/catalog', authors, books, bookInstances, authors, genres);
 
 app.use(function(req, res, next) {
   var err = new Error('Not Found');

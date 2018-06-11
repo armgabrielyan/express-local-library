@@ -3,8 +3,12 @@ const { sanitizeBody } = require('express-validator/filter');
 const Genre = require('../models/genre');
 const Book = require('../models/book');
 
-// Display list of all Genre.
-exports.genre_list = (req, res, next) => {
+const validateGenre = [
+    body('name', 'Genre name required').isLength({ min: 1 }).trim(),
+    sanitizeBody('name').trim().escape(),
+];
+
+exports.genreList = (req, res, next) => {
     Genre.find((err, genres) => {
         if (err) {
             return next(err);
@@ -14,15 +18,13 @@ exports.genre_list = (req, res, next) => {
     });
 };
 
-// Display detail page for a specific Genre.
-exports.genre_detail = (req, res, next) => {
+exports.genreDetail = (req, res, next) => {
     Promise.all([
         Genre.findById(req.params.id),
         Book.find({ genre: req.params.id })
     ])
         .then(data => {
-            const genre = data[0];
-            const genreBooks = data[1];
+            const [genre, genreBooks] = data;
 
             res.render('genre_detail', 
                 { 
@@ -32,16 +34,13 @@ exports.genre_detail = (req, res, next) => {
                 }
             );
         })
-        .catch(err => next(err));
+        .catch(next);
 };
 
-// Display Genre create form on GET.
-exports.genre_create_get = (req, res) => res.render('genre_form', { title: 'Create Genre' });
+exports.genreCreateGet = (req, res) => res.render('genre_form', { title: 'Create Genre' });
 
-// Handle Genre create on POST.
-exports.genre_create_post = [
-    body('name', 'Genre name required').isLength({ min: 1 }).trim(),
-    sanitizeBody('name').trim().escape(),
+exports.genreCreatePost = [
+    validateGenre,
     (req, res, next) => {
         const { body } = req;
         const errors = validationResult(req);
@@ -76,31 +75,26 @@ exports.genre_create_post = [
     }
 ];
 
-// Display Genre delete form on GET.
-exports.genre_delete_get = (req, res, next) => {
+exports.genreDeleteGet = (req, res, next) => {
     Promise.all([
         Genre.findById(req.params.id),
         Book.find({ genre: req.params.id })
     ])
         .then(data => {
-            const genre = data[0];
-            const genreBooks = data[1];
-
+            const [genre, genreBooks] = data;
             res.render('genre_delete', { genre, genreBooks });
         })
-        .catch(err => next(err));
+        .catch(next);
 };
 
-// Handle Genre delete on POST.
-exports.genre_delete_post = (req, res, next) => {
+exports.genreDeletePost = (req, res, next) => {
     const { id } = req.body;
     Promise.all([
         Genre.findById(id),
         Book.find({ genre: id })
     ])
         .then(data => {
-            const genre = data[0];
-            const genreBooks = data[1];
+            const [genre, genreBooks] = data;
 
             if (genreBooks.length > 0) {
                 res.render('genre_delete', { genre, genreBooks });
@@ -115,11 +109,10 @@ exports.genre_delete_post = (req, res, next) => {
                     res.redirect('/catalog/genres');
                 })
         })
-        .catch(err => next(err));
+        .catch(next);
 };
 
-// Display Genre update form on GET.
-exports.genre_update_get = (req, res, next) => {
+exports.genreUpdateGet = (req, res, next) => {
     Genre.findById(req.params.id)
         .exec((err, genre) => {
             if (err) {
@@ -130,10 +123,8 @@ exports.genre_update_get = (req, res, next) => {
         });
 };
 
-// Handle Genre update on POST.
-exports.genre_update_post = [
-    body('name', 'Genre name required').isLength({ min: 1 }).trim(),
-    sanitizeBody('name').trim().escape(),
+exports.genreUpdatePost = [
+    validateGenre,
     (req, res, next) => {
         const errors = validationResult(req);
         const { body } = req;
